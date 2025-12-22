@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Finance Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input, button {
+            margin: 5px 0;
+            padding: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .delete-btn {
+            background-color: #f44336;
+            width: auto;
+        }
+        .delete-btn:hover {
+            background-color: #da190b;
+        }
+    </style>
+</head>
+<body>
+    <h1>Personal Finance Tracker</h1>
+    <table id="transactions-table">
+        <thead>
+            <tr>
+                <th>Index</th>
+                <th>Name</th>
+                <th>Date</th>
+                <th>From</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="transactions-body">
+            <!-- Transactions will be loaded here -->
+        </tbody>
+    </table>
+
+    <h2>Add New Transaction</h2>
+    <form id="add-transaction-form">
+        <input type="text" id="name" placeholder="Name" required>
+        <input type="text" id="date" placeholder="Date" required>
+        <input type="text" id="from" placeholder="From" required>
+        <input type="number" id="amount" placeholder="Amount" step="0.01" required>
+        <input type="text" id="category" placeholder="Category" required>
+        <button type="submit">Add Transaction</button>
+    </form>
+
+    <script>
+        const apiUrl = 'http://localhost:3003/transactions';
+
+        // Load transactions on page load
+        document.addEventListener('DOMContentLoaded', loadTransactions);
+
+        // Function to load and display transactions
+        async function loadTransactions() {
+            try {
+                const response = await fetch(apiUrl);
+                const transactions = await response.json();
+                const tbody = document.getElementById('transactions-body');
+                tbody.innerHTML = '';
+                transactions.forEach((transaction, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index}</td>
+                        <td>${transaction.name}</td>
+                        <td>${transaction.date}</td>
+                        <td>${transaction.from}</td>
+                        <td>${transaction.amount}</td>
+                        <td>${transaction.category}</td>
+                        <td><button class="delete-btn" onclick="deleteTransaction(${index})">Delete</button></td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+            }
+        }
+
+        // Function to add a new transaction
+        document.getElementById('add-transaction-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newTransaction = {
+                name: document.getElementById('name').value,
+                date: document.getElementById('date').value,
+                from: document.getElementById('from').value,
+                amount: parseFloat(document.getElementById('amount').value),
+                category: document.getElementById('category').value
+            };
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(newTransaction)
+                });
+                if (response.ok) {
+                    loadTransactions(); // Reload the list
+                    document.getElementById('add-transaction-form').reset(); // Clear form
+                } else {
+                    console.error('Error adding transaction');
+                }
+            } catch (error) {
+                console.error('Error adding transaction:', error);
+            }
+        });
+
+        // Function to delete a transaction
+        async function deleteTransaction(index) {
+            try {
+                const response = await fetch(`${apiUrl}/${index}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    loadTransactions(); // Reload the list
+                } else {
+                    console.error('Error deleting transaction');
+                }
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+            }
+        }
+    </script>
+</body>
+</html>
