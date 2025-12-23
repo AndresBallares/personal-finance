@@ -7,6 +7,7 @@ const transactionController = require("./controller/transactionController");
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 app.get("/", (request, respond) => {
     console.log("get to /");
